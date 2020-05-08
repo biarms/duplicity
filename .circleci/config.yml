@@ -9,6 +9,7 @@ jobs:
       - run: apk add make curl
       - setup_remote_docker:
           version: 18.09.3
+      - run: echo "DOCKER_USERNAME: $DOCKER_USERNAME"
       - run: docker login -u "$DOCKER_USERNAME" -p "$DOCKER_PASSWORD"
       - run: docker run --rm --privileged multiarch/qemu-user-static:register --reset
       - run: docker version
