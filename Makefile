@@ -3,9 +3,9 @@ BUILDX_VER=v0.4.1
 CI_NAME?=local
 IMAGE_NAME=biarms/duplicity
 VERSION?=latest
-PLATFORM=linux/arm/v7,linux/arm64/v8,linux/amd64
+PLATFORM=linux/arm64/v8,linux/amd64
 DOCKER_REGISTRY?=docker.io/
-# ,linux/386
+# linux/arm/v7,linux/386
 
 default: prepare build-push
 
