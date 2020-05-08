@@ -20,13 +20,18 @@ check:
 	fi
 
 install:
+	mkdir -vp ~/.docker/cli-plugins/ ~/dockercache
+	curl --silent -L "https://github.com/docker/buildx/releases/download/${BUILDX_VER}/buildx-${BUILDX_VER}.darwin-amd64" > ~/.docker/cli-plugins/docker-buildx
+	chmod a+x ~/.docker/cli-plugins/docker-buildx
+
+install-if-needed:
 	@if ! docker buildx --help > /dev/null ; then \
 	  mkdir -vp ~/.docker/cli-plugins/ ~/dockercache && \
 	  curl --silent -L "https://github.com/docker/buildx/releases/download/${BUILDX_VER}/buildx-${BUILDX_VER}.darwin-amd64" > ~/.docker/cli-plugins/docker-buildx && \
 	  chmod a+x ~/.docker/cli-plugins/docker-buildx ; \
 	fi
 
-prepare: install check
+prepare: install-if-needed check
 	docker buildx create --use
 
 prepare-old: check
