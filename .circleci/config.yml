@@ -15,4 +15,6 @@ jobs:
       - run: docker login -u "$DOCKER_USERNAME" -p "$DOCKER_PASSWORD"
       - run: docker run --rm --privileged multiarch/qemu-user-static:register --reset
       - run: docker version
-      - run: make
+      - run: make install
+      - run: make prepare
+      - run: make build-push
