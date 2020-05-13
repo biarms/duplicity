@@ -8,12 +8,22 @@ jobs:
       - checkout
       - run: apk add make curl bash git
       - setup_remote_docker:
-          version: stable
+          version: 18.09.3 # Max supported version was found on https://circleci.com/docs/2.0/building-docker-images/
       - run:
-          name: debug
+          name: debug env variables
           command: 'echo "DOCKER_USERNAME: $DOCKER_USERNAME"'
+      - run:
+          name: debug os
+          command: 'cat /etc/*release'
+      - run:
+          name: debug kernel
+          command: 'uname -a'
+      - run:
+          name: debug docker version
+          command: 'docker version'
+      - run:
+          name: debug make version
+          command: 'make --version'
       - run: docker login -u "$DOCKER_USERNAME" -p "$DOCKER_PASSWORD"
       - run: docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
-      - run: docker version
-      - run: make --version
       - run: make build-and-tests
