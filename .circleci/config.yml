@@ -5,8 +5,8 @@ jobs:
     docker:
       - image: ubuntu:bionic
     steps:
-      #- setup_remote_docker:
-      #  version: 18.09.3 # Max supported version was found on https://circleci.com/docs/2.0/building-docker-images/
+      - setup_remote_docker:
+        version: 18.09.3 # Max supported version was found on https://circleci.com/docs/2.0/building-docker-images/
       - run: apt-get update
       - run: apt-get install -y curl sudo gnupg git lsb-release software-properties-common
       - run: sudo rm -rf /var/lib/apt/lists/*
@@ -28,7 +28,7 @@ jobs:
           command: 'uname -a'
       - run:
           name: debug docker version
-          command: 'docker --version'
+          command: 'docker version'
       - run:
           name: debug make version
           command: 'make --version'
