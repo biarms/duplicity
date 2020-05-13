@@ -5,11 +5,10 @@ jobs:
     docker:
       - image: ubuntu:bionic
     steps:
-      - checkout
       #- setup_remote_docker:
       #    version: 18.09.3 # Max supported version was found on https://circleci.com/docs/2.0/building-docker-images/
       - run: apt-get update
-      - run: apt-get install -y curl sudo
+      - run: apt-get install -y curl sudo gnupg git lsb-release add-apt-repository
       - run: sudo rm -rf /var/lib/apt/lists/*
       - run: curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
       - run: lsb_release -cs
@@ -36,4 +35,5 @@ jobs:
           command: 'make --version'
       - run: docker login -u "$DOCKER_USERNAME" -p "$DOCKER_PASSWORD"
       - run: docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
+      - checkout
       - run: make build-and-tests
