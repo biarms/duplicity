@@ -13,9 +13,7 @@ jobs:
           name: debug
           command: 'echo "DOCKER_USERNAME: $DOCKER_USERNAME"'
       - run: docker login -u "$DOCKER_USERNAME" -p "$DOCKER_PASSWORD"
-      - run: docker run --rm --privileged multiarch/qemu-user-static:register --reset
+      - run: docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
       - run: docker version
       - run: make --version
-      - run: make install
-      - run: make prepare
-      - run: make build-push
+      - run: make build-and-tests

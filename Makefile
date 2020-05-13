@@ -1,50 +1,64 @@
-# Inspired by https://github.com/jdrouet/docker-on-ci/
-BUILDX_VER=v0.4.1
-CI_NAME?=local
-IMAGE_NAME=biarms/duplicity
-VERSION?=latest
-PLATFORM=linux/arm64/v8,linux/amd64
-DOCKER_REGISTRY?=docker.io/
-# linux/arm/v7,linux/386
+SHELL = bash
 
-default: prepare build-push
+DOCKER_REGISTRY ?= 'docker.io'
+DOCKER_IMAGE_VERSION ?= 0.7.18.2
+DOCKER_IMAGE_NAME = biarms/duplicity
+BUILD_DATE ?= `date -u +"%Y-%m-%dT%H-%M-%SZ"`
+# See https://microbadger.com/labels
+VCS_REF = `git rev-parse --short HEAD`
+PLATFORM ?= linux/arm/v7,linux/arm64/v8,linux/amd64
+
+ARCH ?= arm64v8
+LINUX_ARCH ?= aarch64
+# See https://github.com/docker-library/official-images#architectures-other-than-amd64
+# |---------|------------|
+# |  ARCH   | LINUX_ARCH |
+# |---------|------------|
+# |  amd64  |   x86_64   |
+# | arm32v6 |   armv6l   |
+# | arm32v7 |   armv7l   |
+# | arm64v8 |   aarch64  |
+# |---------|------------|
+
+# DOCKER_CLI_EXPERIMENTAL = enabled is needed for "docker manifest". See https://docs.docker.com/engine/reference/commandline/manifest/ (at least with 19.03)
+
+default: build-and-tests
 
 check:
-	@if [[ "${PLATFORM}" == "" ]]; then \
-		echo 'PLATFORM is unset (MUST BE SET !)' && \
-		exit 1; \
-	fi
-	@if ! docker buildx --help > /dev/null ; then \
-		echo "docker buildx plugin is not installed. Please consider running 'make install' " && \
-		exit 1; \
-	fi
+	@ which docker > /dev/null || (echo "Please install docker before using this script" && exit 1)
+	@ DOCKER_CLI_EXPERIMENTAL=enabled docker manifest --help | grep "docker manifest COMMAND" > /dev/null || (echo "docker manifest is needed. Consider upgrading docker" && exit 2)
+	@ DOCKER_CLI_EXPERIMENTAL=enabled docker version -f '{{.Client.Experimental}}' | grep "true" > /dev/null || (echo "docker experimental mode is not enabled" && exit 2)
+	@ echo "DOCKER_REGISTRY: ${DOCKER_REGISTRY}"
+	@ echo "BUILD_DATE: ${BUILD_DATE}"
+	@ echo "VCS_REF: ${VCS_REF}"
 
-install:
-	mkdir -vp ~/.docker/cli-plugins/ ~/dockercache
-	curl --silent -L "https://github.com/docker/buildx/releases/download/${BUILDX_VER}/buildx-${BUILDX_VER}.darwin-amd64" > ~/.docker/cli-plugins/docker-buildx
-	chmod a+x ~/.docker/cli-plugins/docker-buildx
+infra-tests: check
+	docker version
+	docker buildx version
 
-install-if-needed:
-	@if ! docker buildx --help > /dev/null ; then \
-	  mkdir -vp ~/.docker/cli-plugins/ ~/dockercache && \
-	  curl --silent -L "https://github.com/docker/buildx/releases/download/${BUILDX_VER}/buildx-${BUILDX_VER}.darwin-amd64" > ~/.docker/cli-plugins/docker-buildx && \
-	  chmod a+x ~/.docker/cli-plugins/docker-buildx ; \
-	fi
+prepare: infra-tests
+	docker buildx create --name=buildx-multi-arch || true
+	docker buildx use buildx-multi-arch
 
-prepare: install-if-needed check
-	docker buildx create --use
+test-arm32v7: check
+	ARCH=arm32v7 LINUX_ARCH=armv7l DOCKER_IMAGE_VERSION=$(DOCKER_IMAGE_VERSION) make -f test-one-image
 
-prepare-old: check
-	docker context create old-style || true
-	docker buildx create old-style --use || true
-	docker context use old-style
+test-arm64v8: check
+	ARCH=arm64v8 LINUX_ARCH=aarch64 DOCKER_IMAGE_VERSION=$(DOCKER_IMAGE_VERSION) make -f test-one-image
 
-build: check
-	docker buildx build \
-		--platform ${PLATFORM} \
-		-t ${IMAGE_NAME}:${VERSION} .
+test-amd64: check
+	ARCH=amd64 LINUX_ARCH=x86_64 DOCKER_IMAGE_VERSION=$(DOCKER_IMAGE_VERSION) make -f test-one-image
 
-build-push: check
-	docker buildx build --push \
-		--platform ${PLATFORM} \
-		-t ${DOCKER_REGISTRY}${IMAGE_NAME}:${VERSION} .
+test-images: test-arm32v7 test-arm64v8 test-amd64
+	echo "All tests are OK :)"
+
+build: prepare
+	docker buildx build -f Dockerfile --platform "${PLATFORM}" --tag "${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_VERSION}" --build-arg VERSION="${DOCKER_IMAGE_VERSION}" --build-arg VCS_REF="${VCS_REF}" --build-arg BUILD_DATE="${BUILD_DATE}" .
+
+build-and-tests: prepare test-images build
+	echo "Build completed"
+
+build-and-push: prepare test-images
+	docker buildx build -f Dockerfile --push --platform "${PLATFORM}" --tag "${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_VERSION}" --build-arg VERSION="${DOCKER_IMAGE_VERSION}" --build-arg VCS_REF="${VCS_REF}" --build-arg BUILD_DATE="${BUILD_DATE}" .
+	docker buildx build -f Dockerfile --push --platform "${PLATFORM}" --tag "${DOCKER_IMAGE_NAME}:latest" --build-arg VERSION="${DOCKER_IMAGE_VERSION}" --build-arg VCS_REF="${VCS_REF}" --build-arg BUILD_DATE="${BUILD_DATE}" .
+
