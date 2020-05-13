@@ -40,6 +40,8 @@ infra-tests: check
 prepare: infra-tests
 	DOCKER_CLI_EXPERIMENTAL=enabled docker buildx create --name=buildx-multi-arch || true
 	DOCKER_CLI_EXPERIMENTAL=enabled docker buildx use buildx-multi-arch
+	@ # From https://github.com/multiarch/qemu-user-static:
+	docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
 
 test-arm32v7: check
 	ARCH=arm32v7 LINUX_ARCH=armv7l DOCKER_IMAGE_VERSION=$(DOCKER_IMAGE_VERSION) make -f test-one-image
