@@ -34,7 +34,7 @@ check:
 	@ echo "VCS_REF: ${VCS_REF}"
 
 infra-tests: check
-	docker version
+	docker --version
 	DOCKER_CLI_EXPERIMENTAL=enabled docker buildx version
 
 prepare: infra-tests
