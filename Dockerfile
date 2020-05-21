@@ -15,4 +15,9 @@ FROM ${BUILD_ARCH}python:3.8.2-slim-buster
 
 RUN apt-get update && apt-get install -y duplicity
 
-RUN duplicity --version
+ARG BUILD_DATE
+ARG VCS_REF
+LABEL \
+	org.label-schema.build-date=$BUILD_DATE \
+	org.label-schema.vcs-ref=$VCS_REF \
+	org.label-schema.vcs-url="https://github.com/biarms/duplicity"
