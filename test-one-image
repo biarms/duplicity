@@ -5,16 +5,31 @@ ARCH ?=
 LINUX_ARCH ?=
 DOCKER_IMAGE_NAME = test
 BUILD_ARCH = $(ARCH)/
-DOCKER_FILE = Dockerfile
 
 default: test
 
 check:
 	@which docker > /dev/null || (echo "Please install docker before using this script" && exit 1)
+	@ if [[ "$(ARCH)" == "" ]]; then \
+	    echo 'ARCH is $(ARCH) (MUST BE SET !)' && \
+	    echo 'Correct usage sample: ' && \
+        echo '    ARCH=arm64v8 LINUX_ARCH=aarch64 make -f test-one-image' && \
+	    echo '    or ' && \
+        echo '    ARCH=arm64v8 LINUX_ARCH=aarch64 make -f test-one-image' && \
+        exit -1; \
+	fi
+	@ if [[ "$(LINUX_ARCH)" == "" ]]; then \
+	    echo 'LINUX_ARCH is $(LINUX_ARCH) (MUST BE SET !)' && \
+	    echo 'Correct usage sample: ' && \
+	    echo '    ARCH=arm32v7 LINUX_ARCH=armv7l make -f test-one-image' && \
+	    echo '    or ' && \
+        echo '    ARCH=arm64v8 LINUX_ARCH=aarch64 make -f test-one-image' && \
+        exit -2; \
+	fi
 	@echo "DOCKER_REGISTRY: $(DOCKER_REGISTRY)"
 
 build: check
-	docker build -t $(DOCKER_REGISTRY)$(DOCKER_IMAGE_NAME):latest -f $(DOCKER_FILE) --build-arg VERSION="${DOCKER_IMAGE_VERSION}" --build-arg BUILD_ARCH="${BUILD_ARCH}" .
+	docker build -t $(DOCKER_REGISTRY)$(DOCKER_IMAGE_NAME):latest --build-arg BUILD_ARCH="${BUILD_ARCH}" .
 
 test: build
 	docker run --rm $(DOCKER_IMAGE_NAME) /bin/echo "Success." | grep "Success"
