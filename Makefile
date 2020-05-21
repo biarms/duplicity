@@ -3,7 +3,7 @@ SHELL = bash
 # .SHELLFLAGS = -e
 # See https://www.gnu.org/software/make/manual/html_node/Phony-Targets.html
 .PHONY: default all build circleci-local-build check-binaries check-buildx check-docker-login docker-login-if-possible buildx-prepare \
-        buildx install-qemu uninstall-qemu test-arm32v7 test-arm64v8 test-amd64 test-images
+        buildx prepare install-qemu uninstall-qemu test-arm32v7 test-arm64v8 test-amd64 test-images
 
 # DOCKER_REGISTRY: Nothing, or 'registry:5000/'
 DOCKER_REGISTRY ?= docker.io/
@@ -77,6 +77,8 @@ buildx: docker-login-if-possible buildx-prepare
 	DOCKER_CLI_EXPERIMENTAL=enabled docker buildx build --progress plain -f Dockerfile --push --platform "${PLATFORM}" --tag "$(DOCKER_REGISTRY)${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_VERSION}${BETA_VERSION}" --build-arg VERSION="${DOCKER_IMAGE_VERSION}" --build-arg VCS_REF="${VCS_REF}" --build-arg BUILD_DATE="${BUILD_DATE}" .
 	DOCKER_CLI_EXPERIMENTAL=enabled docker buildx build --progress plain -f Dockerfile --push --platform "${PLATFORM}" --tag "$(DOCKER_REGISTRY)${DOCKER_IMAGE_NAME}:latest${BETA_VERSION}" --build-arg VERSION="${DOCKER_IMAGE_VERSION}" --build-arg VCS_REF="${VCS_REF}" --build-arg BUILD_DATE="${BUILD_DATE}" .
 
+prepare: install-qemu
+
 # Test are qemu based. SHOULD_DO: use `docker buildx bake`. See https://github.com/docker/buildx#buildx-bake-options-target
 install-qemu: check-binaries
 	# @ # From https://github.com/multiarch/qemu-user-static:
@@ -85,13 +87,13 @@ install-qemu: check-binaries
 uninstall-qemu: check-binaries
 	docker run --rm --privileged multiarch/qemu-user-static:register --reset
 
-test-arm32v7: install-qemu
+test-arm32v7: prepare
 	ARCH=arm32v7 LINUX_ARCH=armv7l make -f test-one-image
 
-test-arm64v8: install-qemu
+test-arm64v8: prepare
 	ARCH=arm64v8 LINUX_ARCH=aarch64 make -f test-one-image
 
-test-amd64: install-qemu
+test-amd64: prepare
 	ARCH=amd64 LINUX_ARCH=x86_64 make -f test-one-image
 
 # Fails with: "standard_init_linux.go:211: exec user process caused "no such file or directory"" if qemu is not installed...
