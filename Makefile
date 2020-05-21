@@ -15,7 +15,6 @@ DOCKER_PASSWORD ?=
 BETA_VERSION ?=
 DOCKER_IMAGE_NAME = biarms/duplicity
 DOCKER_IMAGE_VERSION = 0.7.18.2
-DOCKER_IMAGE_TAGNAME=${DOCKER_REGISTRY}${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_VERSION}
 # See https://www.gnu.org/software/make/manual/html_node/Shell-Function.html
 BUILD_DATE=$(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
 # See https://microbadger.com/labels
@@ -25,6 +24,8 @@ PLATFORM ?= linux/arm/v7,linux/arm64/v8,linux/amd64
 
 ARCH ?= arm64v8
 LINUX_ARCH ?= aarch64
+BUILD_ARCH = $(ARCH)/
+
 # See https://github.com/docker-library/official-images#architectures-other-than-amd64
 # |---------|------------|
 # |  ARCH   | LINUX_ARCH |
@@ -55,7 +56,6 @@ check-binaries:
 	@ echo "DOCKER_REGISTRY: ${DOCKER_REGISTRY}"
 	@ echo "BUILD_DATE: ${BUILD_DATE}"
 	@ echo "VCS_REF: ${VCS_REF}"
-	@ echo "DOCKER_IMAGE_TAGNAME: ${DOCKER_IMAGE_TAGNAME}"
 
 check-buildx: check-binaries
 	# Next line will fail if docker server can't be contacted
