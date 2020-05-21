@@ -21,7 +21,6 @@ BUILD_DATE=$(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
 VCS_REF=$(shell git rev-parse --short HEAD)
 
 PLATFORM ?= linux/arm/v7,linux/arm64/v8,linux/amd64
-
 ARCH ?= arm64v8
 LINUX_ARCH ?= aarch64
 BUILD_ARCH = $(ARCH)/
@@ -38,7 +37,7 @@ BUILD_ARCH = $(ARCH)/
 
 default: all
 
-all: test-images buildx
+all: test-images buildx uninstall-qemu
 
 build: buildx
 
@@ -69,7 +68,7 @@ docker-login-if-possible: check-binaries
 	if [[ ! "${DOCKER_USERNAME}" == "" ]]; then echo "${DOCKER_PASSWORD}" | docker login --username "${DOCKER_USERNAME}" --password-stdin; fi
 
 # See https://docs.docker.com/buildx/working-with-buildx/
-buildx-prepare: check-buildx
+buildx-prepare: install-qemu check-buildx
 	DOCKER_CLI_EXPERIMENTAL=enabled docker context create buildx-multi-arch-context || true
 	DOCKER_CLI_EXPERIMENTAL=enabled docker buildx create buildx-multi-arch-context --name=buildx-multi-arch || true
 	DOCKER_CLI_EXPERIMENTAL=enabled docker buildx use buildx-multi-arch
@@ -84,10 +83,7 @@ install-qemu: check-binaries
 	docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
 
 uninstall-qemu: check-binaries
-    # Does not sounds as a good idea: the build will fail if we remove qemu !
-    # It is certainly because docker buildx also need this qemu plugin...
-	# docker run --rm --privileged multiarch/qemu-user-static:register --reset
-	@ echo "uninstall-qemu: skipped on purpose"
+	docker run --rm --privileged multiarch/qemu-user-static:register --reset
 
 test-arm32v7: install-qemu
 	ARCH=arm32v7 LINUX_ARCH=armv7l make -f test-one-image
@@ -99,5 +95,5 @@ test-amd64: install-qemu
 	ARCH=amd64 LINUX_ARCH=x86_64 make -f test-one-image
 
 # Fails with: "standard_init_linux.go:211: exec user process caused "no such file or directory"" if qemu is not installed...
-test-images: test-arm32v7 test-arm64v8 test-amd64 uninstall-qemu
+test-images: test-arm32v7 test-arm64v8 test-amd64
 	echo "All tests are OK :)"
