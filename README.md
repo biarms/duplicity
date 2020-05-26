@@ -20,6 +20,9 @@ This project build a very simple container based on python3-alpine which include
 
 Resulting docker images are pushed on [docker hub](https://hub.docker.com/r/biarms/duplicity/).
 
+## References
+- Versions: https://launchpad.net/duplicity/+series
+
 ## How to build locally
 1. Option 1: with CircleCI Local CLI:
    - Install [CircleCI Local CLI](https://circleci.com/docs/2.0/local-cli/)
