@@ -20,8 +20,10 @@ This project build a very simple container based on python3-alpine which include
 
 Resulting docker images are pushed on [docker hub](https://hub.docker.com/r/biarms/duplicity/).
 
+*Caution*: only arm32v7, arm64v8 and amd64 images are produced (no arm32v6), so this image won't be supported on Raspberry Zero or one.
+
 ## References
-- Versions: https://launchpad.net/duplicity/+series
+- Duplicity versions: https://launchpad.net/duplicity/+series
 
 ## How to build locally
 1. Option 1: with CircleCI Local CLI:
