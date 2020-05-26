@@ -2,7 +2,7 @@
 # BUILD_ARCH: the docker architecture, with a tailing '/'. For instance, "arm64v8/"
 ARG BUILD_ARCH
 
-# FROM ${BUILD_ARCH}python:3.8.2-alpine
+# FROM ${BUILD_ARCH}python:3.8.3-alpine
 # RUN apk add duplicity
 # RUN duplicity --version
 # =>
@@ -11,9 +11,12 @@ ARG BUILD_ARCH
 #     from future import standard_library
 # ModuleNotFoundError: No module named 'future'
 
-FROM ${BUILD_ARCH}python:3.8.2-slim-buster
+FROM ${BUILD_ARCH}python:3.8.3-slim-buster
 
 RUN apt-get update && apt-get install -y duplicity
+
+# A simple smoke test
+RUN duplicity --version
 
 ARG BUILD_DATE
 ARG VCS_REF
